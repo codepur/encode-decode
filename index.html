@@ -102,117 +102,104 @@
     <!-- CryptoJS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 
-    <script>
-        function encryptData() {
-            try {
-                let data = $("#encodePayload").val().trim();
-                let secretKey = $("#secretKeyEncode").val().trim();
-                
-                if (!data) {
-                    alert("Please enter data to encrypt");
-                    return;
-                }
-                
-                if (!secretKey) {
-                    alert("Please enter a secret key");
-                    return;
-                }
-                
-                let isDataObject = $("#isEncodePayloadObject").is(":checked");
-                
-                // Parse JSON if checkbox is checked
-                if (isDataObject) {
-                    try {
-                        data = JSON.stringify(JSON.parse(data));
-                    } catch (e) {
-                        alert("Invalid JSON format");
-                        return;
-                    }
-                }
-                
-                // Fixed IV for consistency
-                const iv = CryptoJS.enc.Utf8.parse("1234567890123456");
-                const key = CryptoJS.enc.Utf8.parse(secretKey);
-                
-                // Encrypt data
-                const encrypted = CryptoJS.AES.encrypt(data, key, {
-                    iv: iv,
-                    mode: CryptoJS.mode.CBC,
-                    padding: CryptoJS.pad.Pkcs7,
-                });
-                
-                // Display results
-                $("#encryptedIV").val(CryptoJS.enc.Base64.stringify(iv));
-                $("#encryptedData").val(encrypted.toString());
-                
-                alert("Encryption successful!");
-            } catch (error) {
-                alert("Encryption error: " + error.message);
+   <script>
+    function encryptData() {
+        try {
+            let data = $("#encodePayload").val().trim();
+            let secretKey = $("#secretKeyEncode").val().trim();
+
+            if (!data) {
+                alert("Please enter data to encrypt");
+                return;
             }
-        }
-        
-        function decryptData() {
-            try {
-                let ivBase64 = $("#decryptIV").val().trim();
-                let encryptedData = $("#decryptData").val().trim();
-                let secretKey = $("#secretKeyDecode").val().trim();
-                
-                if (!ivBase64 || !encryptedData) {
-                    alert("Please enter both IV and encrypted data");
-                    return;
-                }
-                
-                if (!secretKey) {
-                    alert("Please enter a secret key");
-                    return;
-                }
-                
-                let isDataObject = $("#isDecodePayloadObject").is(":checked");
-                
-                // Parse the IV from Base64
-                const iv = CryptoJS.enc.Base64.parse(ivBase64);
-                const key = CryptoJS.enc.Utf8.parse(secretKey);
-                
-                // Decrypt the data
-                const decrypted = CryptoJS.AES.decrypt(encryptedData, key, {
-                    iv: iv,
-                    mode: CryptoJS.mode.CBC,
-                    padding: CryptoJS.pad.Pkcs7,
-                });
-                
-                // Convert decrypted data to UTF8 string
-                let decryptedStr = decrypted.toString(CryptoJS.enc.Utf8);
-                
-                if (!decryptedStr) {
-                    alert("Decryption failed. Check your secret key and encrypted data.");
-                    return;
-                }
-                
-                // Format as JSON if checkbox is checked
-                if (isDataObject) {
-                    try {
-                        decryptedStr = JSON.stringify(JSON.parse(decryptedStr), null, 2);
-                    } catch (e) {
-                        // Keep as string if not valid JSON
-                    }
-                }
-                
-                $("#decryptedOutput").val(decryptedStr);
-                alert("Decryption successful!");
-            } catch (error) {
-                alert("Decryption error: " + error.message);
+            if (!secretKey) {
+                alert("Please enter a secret key (Base64)");
+                return;
             }
+
+            let isDataObject = $("#isEncodePayloadObject").is(":checked");
+
+            if (isDataObject) {
+                try {
+                    data = JSON.stringify(JSON.parse(data));
+                } catch (e) {
+                    alert("Invalid JSON format");
+                    return;
+                }
+            }
+
+            // Parse Base64 key
+            const key = CryptoJS.enc.Base64.parse(secretKey);
+
+            // Generate random IV (16 bytes)
+            const iv = CryptoJS.lib.WordArray.random(16);
+
+            // Encrypt
+            const encrypted = CryptoJS.AES.encrypt(data, key, {
+                iv: iv,
+                mode: CryptoJS.mode.CBC,
+                padding: CryptoJS.pad.Pkcs7,
+            });
+
+            $("#encryptedIV").val(CryptoJS.enc.Base64.stringify(iv));
+            $("#encryptedData").val(encrypted.toString());
+
+            // Auto fill decryption side
+            $("#decryptIV").val($("#encryptedIV").val());
+            $("#decryptData").val($("#encryptedData").val());
+
+            alert("Encryption successful!");
+        } catch (error) {
+            alert("Encryption error: " + error.message);
         }
-        
-        // Auto-copy IV and data from encrypt to decrypt side
-        $("#encryptedIV").on("input", function() {
-            $("#decryptIV").val($(this).val());
-        });
-        
-        $("#encryptedData").on("input", function() {
-            $("#decryptData").val($(this).val());
-        });
-    </script>
+    }
+
+    function decryptData() {
+        try {
+            let ivBase64 = $("#decryptIV").val().trim();
+            let encryptedData = $("#decryptData").val().trim();
+            let secretKey = $("#secretKeyDecode").val().trim();
+
+            if (!ivBase64 || !encryptedData) {
+                alert("Please enter both IV and encrypted data");
+                return;
+            }
+            if (!secretKey) {
+                alert("Please enter a secret key (Base64)");
+                return;
+            }
+
+            const key = CryptoJS.enc.Base64.parse(secretKey);
+            const iv = CryptoJS.enc.Base64.parse(ivBase64);
+
+            const decrypted = CryptoJS.AES.decrypt(encryptedData, key, {
+                iv: iv,
+                mode: CryptoJS.mode.CBC,
+                padding: CryptoJS.pad.Pkcs7,
+            });
+
+            let decryptedStr = decrypted.toString(CryptoJS.enc.Utf8);
+
+            if (!decryptedStr) {
+                alert("Decryption failed. Wrong key/IV/data.");
+                return;
+            }
+
+            if ($("#isDecodePayloadObject").is(":checked")) {
+                try {
+                    decryptedStr = JSON.stringify(JSON.parse(decryptedStr), null, 2);
+                } catch (e) {}
+            }
+
+            $("#decryptedOutput").val(decryptedStr);
+            alert("Decryption successful!");
+        } catch (error) {
+            alert("Decryption error: " + error.message);
+        }
+    }
+</script>
+
 </body>
 </html>
+
 
