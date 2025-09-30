@@ -20,6 +20,9 @@
             padding: 10px;
             margin-top: 10px;
         }
+        .mt-2 {
+            margin-top: 8px;
+        }
     </style>
 </head>
 <body style="margin: 20px;">
@@ -36,7 +39,7 @@
                 <div class="panel-body">
                     <div class="mb-3">
                         <label for="secretKeyEncode">Secret Key:</label>
-                        <input type="text" id="secretKeyEncode" class="form-control" value="hello12345hello12345hello1234523" placeholder="Enter secret key">
+                        <input type="text" id="secretKeyEncode" class="form-control" value="your-256-bit-encryption-key" placeholder="Enter secret key">
                     </div>
                     <div class="mb-3">
                         <input type="checkbox" id="isEncodePayloadObject" checked>
@@ -46,13 +49,9 @@
                         <label for="encodePayload">Data to Encrypt:</label>
                         <textarea id="encodePayload" class="form-control" rows="5" placeholder='Enter data (e.g., {"username":"john","email":"john@example.com"})'></textarea>
                     </div>
-                    <button class="btn btn-success btn-block mt-2"  onclick="encryptData()">Encrypt</button>
+                    <button class="btn btn-success btn-block mt-2" onclick="encryptData()">Encrypt</button>
                 </div>
                 <div class="panel-footer">
-                    <div class="mb-3">
-                        <label for="encryptedIV">IV (Base64):</label>
-                        <textarea id="encryptedIV" class="form-control" rows="2" readonly></textarea>
-                    </div>
                     <div class="mb-3">
                         <label for="encryptedData">Encrypted Data:</label>
                         <textarea id="encryptedData" class="form-control" rows="5" readonly></textarea>
@@ -69,15 +68,11 @@
                 <div class="panel-body">
                     <div class="mb-3">
                         <label for="secretKeyDecode">Secret Key:</label>
-                        <input type="text" id="secretKeyDecode" class="form-control" value="hello12345hello12345hello1234523" placeholder="Enter secret key">
+                        <input type="text" id="secretKeyDecode" class="form-control" value="your-256-bit-encryption-key" placeholder="Enter secret key">
                     </div>
                     <div class="mb-3">
                         <input type="checkbox" id="isDecodePayloadObject" checked>
                         <label for="isDecodePayloadObject">Parse as JSON</label>
-                    </div>
-                    <div class="mb-3">
-                        <label for="decryptIV">IV (Base64):</label>
-                        <textarea id="decryptIV" class="form-control" rows="2" placeholder="Paste IV here"></textarea>
                     </div>
                     <div class="mb-3">
                         <label for="decryptData">Encrypted Data:</label>
@@ -113,7 +108,7 @@
                 return;
             }
             if (!secretKey) {
-                alert("Please enter a secret key (Base64, 32 bytes)");
+                alert("Please enter a secret key");
                 return;
             }
 
@@ -127,26 +122,14 @@
                 }
             }
 
-            // ✅ Parse Base64 key
-            const key = CryptoJS.enc.Base64.parse(secretKey);
+            // ✅ Simple AES encryption (no IV)
+            const encrypted = CryptoJS.AES.encrypt(data, secretKey).toString();
 
-            // ✅ Generate random 16-byte IV
-            const iv = CryptoJS.lib.WordArray.random(16);
-
-            // ✅ Encrypt (AES-256-CBC with PKCS7)
-            const encrypted = CryptoJS.AES.encrypt(data, key, {
-                iv: iv,
-                mode: CryptoJS.mode.CBC,
-                padding: CryptoJS.pad.Pkcs7,
-            });
-
-            // ✅ Output Base64 IV and Ciphertext
-            $("#encryptedIV").val(CryptoJS.enc.Base64.stringify(iv));
-            $("#encryptedData").val(encrypted.toString());
+            // ✅ Output encrypted data
+            $("#encryptedData").val(encrypted);
 
             // Autofill decrypt side
-            $("#decryptIV").val($("#encryptedIV").val());
-            $("#decryptData").val($("#encryptedData").val());
+            $("#decryptData").val(encrypted);
 
             alert("Encryption successful!");
         } catch (error) {
@@ -156,34 +139,24 @@
 
     function decryptData() {
         try {
-            let ivBase64 = $("#decryptIV").val().trim();
             let encryptedData = $("#decryptData").val().trim();
             let secretKey = $("#secretKeyDecode").val().trim();
 
-            if (!ivBase64 || !encryptedData) {
-                alert("Please enter both IV and encrypted data");
+            if (!encryptedData) {
+                alert("Please enter encrypted data");
                 return;
             }
             if (!secretKey) {
-                alert("Please enter a secret key (Base64, 32 bytes)");
+                alert("Please enter a secret key");
                 return;
             }
 
-            // ✅ Parse Base64 key + IV
-            const key = CryptoJS.enc.Base64.parse(secretKey);
-            const iv = CryptoJS.enc.Base64.parse(ivBase64);
-
-            // ✅ Decrypt
-            const decrypted = CryptoJS.AES.decrypt(encryptedData, key, {
-                iv: iv,
-                mode: CryptoJS.mode.CBC,
-                padding: CryptoJS.pad.Pkcs7,
-            });
-
-            let decryptedStr = decrypted.toString(CryptoJS.enc.Utf8);
+            // ✅ Simple AES decryption (no IV)
+            const decryptedBytes = CryptoJS.AES.decrypt(encryptedData, secretKey);
+            let decryptedStr = decryptedBytes.toString(CryptoJS.enc.Utf8);
 
             if (!decryptedStr) {
-                alert("Decryption failed. Wrong key/IV/data.");
+                alert("Decryption failed. Wrong key or corrupted data.");
                 return;
             }
 
@@ -206,6 +179,5 @@
 
 </body>
 </html>
-
 
 
