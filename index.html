@@ -1,105 +1,217 @@
-
 <!DOCTYPE html>
-<html lang="">
-    <head>
-        <meta charset="utf-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Title Page</title>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>AES Encrypt/Decrypt Test</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
+    
+    <style>
+        .col-center {
+            margin: 0 auto;
+        }
+        .output-box {
+            background-color: #f5f5f5;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body style="margin: 20px;">
+    <h1 class="text-center">AES Encryption/Decryption Test</h1>
+    <button class="btn btn-lg btn-danger" onclick="window.location = window.location">Reload</button>
+    <hr>
 
-        <!-- Bootstrap CSS -->
-        <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
-
-        <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
-        <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
-        <!--[if lt IE 9]>
-            <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.3/html5shiv.js"></script>
-            <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
-        <![endif]-->
-        <style>
-            .col-center{
-                margin:0 auto;
-            }
-        </style>
-    </head>
-    <body style="margin: 20px;">
-        <h1 class="text-center">Encode/Decode</h1>
-        <button class="btn btn-lg btn-danger" onclick="window.location = window.location">Reload</button>
-        <hr>
-        <!-- jQuery -->
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
-        <!-- Bootstrap JavaScript -->
-        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/js-base64@3.7.2/base64.min.js"></script>
-
-        <div class="row">
-          <div class="col-lg-6">
+    <div class="row">
+        <div class="col-lg-6">
             <div class="panel panel-success">
-              <div class="panel-heading">
-                <div class="panel-title">Encode Text</div>
-              </div>
-              <div class="panel panel-body">
-                <div class="mb-3">
-                  <input type="checkbox" class="form-check-input" id="isEncodePayloadObject" checked>
-                  <label class="form-check-label" for="isEncodePayloadObject" >Is Object</label>
-                  <textarea name="encodePayload" id="encodePayload" class="form-control" rows="5" onchange="encodeData()"></textarea>
+                <div class="panel-heading">
+                    <div class="panel-title">Encrypt Data</div>
                 </div>
-              </div>
-              <div class="panel panel-footer">
-                <div class="mb-3">
-                  <label for="encodeOutput" class="form-label">Encoded Data:</label>
-                  <textarea name="encodeOutput" id="encodeOutput" class="form-control" rows="5" readonly></textarea>
-              </div>
-              </div>
-            </div>
-          </div>
-          <div class="col-lg-6">
-            <div class="panel panel-info">
-              <div class="panel-heading">
-                <div class="panel-title">Decode Text</div>
-              </div>
-              <div class="panel panel-body">
-                <div class="mb-3">
-                  <input type="checkbox" class="form-check-input" id="isDecodePayloadObject" checked>
-                  <label class="form-check-label" for="isDecodePayloadObject" >Is Object</label>
-                  <textarea name="decodePayload" id="decodePayload" class="form-control" rows="5" onchange="decodeData()"></textarea>
+                <div class="panel-body">
+                    <div class="mb-3">
+                        <label for="secretKeyEncode">Secret Key:</label>
+                        <input type="text" id="secretKeyEncode" class="form-control" value="hello12345hello12345hello1234523" placeholder="Enter secret key">
+                    </div>
+                    <div class="mb-3">
+                        <input type="checkbox" id="isEncodePayloadObject" checked>
+                        <label for="isEncodePayloadObject">Is JSON Object</label>
+                    </div>
+                    <div class="mb-3">
+                        <label for="encodePayload">Data to Encrypt:</label>
+                        <textarea id="encodePayload" class="form-control" rows="5" placeholder='Enter data (e.g., {"username":"john","email":"john@example.com"})'></textarea>
+                    </div>
+                    <button class="btn btn-success btn-block" onclick="encryptData()">Encrypt</button>
                 </div>
-              </div>
-              <div class="panel panel-footer">
-                <div class="mb-3">
-                  <label for="decodeOutput" class="form-label">Decoded Data:</label>
-                  <textarea name="decodeOutput" id="decodeOutput" class="form-control" rows="5" readonly></textarea>
-              </div>
-              </div>
+                <div class="panel-footer">
+                    <div class="mb-3">
+                        <label for="encryptedIV">IV (Base64):</label>
+                        <textarea id="encryptedIV" class="form-control" rows="2" readonly></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="encryptedData">Encrypted Data:</label>
+                        <textarea id="encryptedData" class="form-control" rows="5" readonly></textarea>
+                    </div>
+                </div>
             </div>
-          </div>
         </div>
 
-          <script>
-            function encodeData(){
-                let data = $("#encodePayload").val().trim() || "";
-                if(data.length > 0){
-                  let isDataObject = $("#isEncodePayloadObject").is(":checked");
-                  if(isDataObject){
-                      data = JSON.stringify(JSON.parse(data));
-                  }
-                  let encodeObj = Base64.btoa(encodeURI(data));
-                  $("#encodeOutput").val(encodeObj);
+        <div class="col-lg-6">
+            <div class="panel panel-info">
+                <div class="panel-heading">
+                    <div class="panel-title">Decrypt Data</div>
+                </div>
+                <div class="panel-body">
+                    <div class="mb-3">
+                        <label for="secretKeyDecode">Secret Key:</label>
+                        <input type="text" id="secretKeyDecode" class="form-control" value="hello12345hello12345hello1234523" placeholder="Enter secret key">
+                    </div>
+                    <div class="mb-3">
+                        <input type="checkbox" id="isDecodePayloadObject" checked>
+                        <label for="isDecodePayloadObject">Parse as JSON</label>
+                    </div>
+                    <div class="mb-3">
+                        <label for="decryptIV">IV (Base64):</label>
+                        <textarea id="decryptIV" class="form-control" rows="2" placeholder="Paste IV here"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="decryptData">Encrypted Data:</label>
+                        <textarea id="decryptData" class="form-control" rows="5" placeholder="Paste encrypted data here"></textarea>
+                    </div>
+                    <button class="btn btn-info btn-block" onclick="decryptData()">Decrypt</button>
+                </div>
+                <div class="panel-footer">
+                    <div class="mb-3">
+                        <label for="decryptedOutput">Decrypted Data:</label>
+                        <textarea id="decryptedOutput" class="form-control" rows="5" readonly></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- jQuery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <!-- Bootstrap JavaScript -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <!-- CryptoJS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+
+    <script>
+        function encryptData() {
+            try {
+                let data = $("#encodePayload").val().trim();
+                let secretKey = $("#secretKeyEncode").val().trim();
+                
+                if (!data) {
+                    alert("Please enter data to encrypt");
+                    return;
                 }
-
-
+                
+                if (!secretKey) {
+                    alert("Please enter a secret key");
+                    return;
+                }
+                
+                let isDataObject = $("#isEncodePayloadObject").is(":checked");
+                
+                // Parse JSON if checkbox is checked
+                if (isDataObject) {
+                    try {
+                        data = JSON.stringify(JSON.parse(data));
+                    } catch (e) {
+                        alert("Invalid JSON format");
+                        return;
+                    }
+                }
+                
+                // Fixed IV for consistency
+                const iv = CryptoJS.enc.Utf8.parse("1234567890123456");
+                const key = CryptoJS.enc.Utf8.parse(secretKey);
+                
+                // Encrypt data
+                const encrypted = CryptoJS.AES.encrypt(data, key, {
+                    iv: iv,
+                    mode: CryptoJS.mode.CBC,
+                    padding: CryptoJS.pad.Pkcs7,
+                });
+                
+                // Display results
+                $("#encryptedIV").val(CryptoJS.enc.Base64.stringify(iv));
+                $("#encryptedData").val(encrypted.toString());
+                
+                alert("Encryption successful!");
+            } catch (error) {
+                alert("Encryption error: " + error.message);
             }
-            function decodeData(){
-                let data = $("#decodePayload").val().trim() || "";
-                if(data.length > 0){
-                  let isDataObject = $("#isDecodePayloadObject").is(":checked");
-                  let decodeObj = decodeURI(Base64.atob(data));
-                  if(isDataObject){
-                      decodeObj = decodeObj;
-                  }
-                  $("#decodeOutput").val(decodeObj);
-              }
+        }
+        
+        function decryptData() {
+            try {
+                let ivBase64 = $("#decryptIV").val().trim();
+                let encryptedData = $("#decryptData").val().trim();
+                let secretKey = $("#secretKeyDecode").val().trim();
+                
+                if (!ivBase64 || !encryptedData) {
+                    alert("Please enter both IV and encrypted data");
+                    return;
+                }
+                
+                if (!secretKey) {
+                    alert("Please enter a secret key");
+                    return;
+                }
+                
+                let isDataObject = $("#isDecodePayloadObject").is(":checked");
+                
+                // Parse the IV from Base64
+                const iv = CryptoJS.enc.Base64.parse(ivBase64);
+                const key = CryptoJS.enc.Utf8.parse(secretKey);
+                
+                // Decrypt the data
+                const decrypted = CryptoJS.AES.decrypt(encryptedData, key, {
+                    iv: iv,
+                    mode: CryptoJS.mode.CBC,
+                    padding: CryptoJS.pad.Pkcs7,
+                });
+                
+                // Convert decrypted data to UTF8 string
+                let decryptedStr = decrypted.toString(CryptoJS.enc.Utf8);
+                
+                if (!decryptedStr) {
+                    alert("Decryption failed. Check your secret key and encrypted data.");
+                    return;
+                }
+                
+                // Format as JSON if checkbox is checked
+                if (isDataObject) {
+                    try {
+                        decryptedStr = JSON.stringify(JSON.parse(decryptedStr), null, 2);
+                    } catch (e) {
+                        // Keep as string if not valid JSON
+                    }
+                }
+                
+                $("#decryptedOutput").val(decryptedStr);
+                alert("Decryption successful!");
+            } catch (error) {
+                alert("Decryption error: " + error.message);
             }
-          </script>
-    </body>
+        }
+        
+        // Auto-copy IV and data from encrypt to decrypt side
+        $("#encryptedIV").on("input", function() {
+            $("#decryptIV").val($(this).val());
+        });
+        
+        $("#encryptedData").on("input", function() {
+            $("#decryptData").val($(this).val());
+        });
+    </script>
+</body>
 </html>
