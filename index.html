@@ -102,7 +102,7 @@
     <!-- CryptoJS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 
-   <script>
+  <script>
     function encryptData() {
         try {
             let data = $("#encodePayload").val().trim();
@@ -113,12 +113,11 @@
                 return;
             }
             if (!secretKey) {
-                alert("Please enter a secret key (Base64)");
+                alert("Please enter a secret key (Base64, 32 bytes)");
                 return;
             }
 
             let isDataObject = $("#isEncodePayloadObject").is(":checked");
-
             if (isDataObject) {
                 try {
                     data = JSON.stringify(JSON.parse(data));
@@ -128,23 +127,24 @@
                 }
             }
 
-            // Parse Base64 key
+            // ✅ Parse Base64 key
             const key = CryptoJS.enc.Base64.parse(secretKey);
 
-            // Generate random IV (16 bytes)
+            // ✅ Generate random 16-byte IV
             const iv = CryptoJS.lib.WordArray.random(16);
 
-            // Encrypt
+            // ✅ Encrypt (AES-256-CBC with PKCS7)
             const encrypted = CryptoJS.AES.encrypt(data, key, {
                 iv: iv,
                 mode: CryptoJS.mode.CBC,
                 padding: CryptoJS.pad.Pkcs7,
             });
 
+            // ✅ Output Base64 IV and Ciphertext
             $("#encryptedIV").val(CryptoJS.enc.Base64.stringify(iv));
             $("#encryptedData").val(encrypted.toString());
 
-            // Auto fill decryption side
+            // Autofill decrypt side
             $("#decryptIV").val($("#encryptedIV").val());
             $("#decryptData").val($("#encryptedData").val());
 
@@ -165,13 +165,15 @@
                 return;
             }
             if (!secretKey) {
-                alert("Please enter a secret key (Base64)");
+                alert("Please enter a secret key (Base64, 32 bytes)");
                 return;
             }
 
+            // ✅ Parse Base64 key + IV
             const key = CryptoJS.enc.Base64.parse(secretKey);
             const iv = CryptoJS.enc.Base64.parse(ivBase64);
 
+            // ✅ Decrypt
             const decrypted = CryptoJS.AES.decrypt(encryptedData, key, {
                 iv: iv,
                 mode: CryptoJS.mode.CBC,
@@ -188,7 +190,9 @@
             if ($("#isDecodePayloadObject").is(":checked")) {
                 try {
                     decryptedStr = JSON.stringify(JSON.parse(decryptedStr), null, 2);
-                } catch (e) {}
+                } catch (e) {
+                    // leave as plain string if not JSON
+                }
             }
 
             $("#decryptedOutput").val(decryptedStr);
@@ -199,7 +203,9 @@
     }
 </script>
 
+
 </body>
 </html>
+
 
 
