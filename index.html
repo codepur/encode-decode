@@ -24,6 +24,57 @@
             margin-top: 8px;
         }
     </style>
+    <script>
+  (function () {
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    canvas.width = 64;
+    canvas.height = 64;
+
+    // Create and manage favicon entirely via JS
+    let favicon = document.querySelector("link[rel='icon']");
+    if (!favicon) {
+      favicon = document.createElement("link");
+      favicon.rel = "icon";
+      document.head.appendChild(favicon);
+    }
+
+    let hue = 0;
+    function draw() {
+      ctx.clearRect(0, 0, 64, 64);
+
+      // Fancy gradient background
+      const gradient = ctx.createRadialGradient(32, 32, 5, 32, 32, 30);
+      gradient.addColorStop(0, `hsl(${hue}, 90%, 60%)`);
+      gradient.addColorStop(1, `hsl(${(hue + 100) % 360}, 90%, 40%)`);
+      ctx.fillStyle = gradient;
+      ctx.beginPath();
+      ctx.arc(32, 32, 28, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Inner pulse ring
+      ctx.strokeStyle = `hsla(${hue}, 100%, 80%, 0.6)`;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(32, 32, 25 + Math.sin(Date.now() / 300) * 2, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Center icon/text
+      ctx.font = "bold 28px sans-serif";
+      ctx.fillStyle = "white";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("⚡", 32, 35);
+
+      favicon.href = canvas.toDataURL("image/png");
+      hue = (hue + 2) % 360;
+      requestAnimationFrame(draw);
+    }
+
+    draw();
+  })();
+</script>
+
 </head>
 <body style="margin: 20px;">
     <h1 class="text-center">AES Encryption/Decryption Test</h1>
@@ -179,6 +230,7 @@
 
 </body>
 </html>
+
 
 
 
